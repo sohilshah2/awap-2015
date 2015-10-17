@@ -149,9 +149,11 @@ class Player(BasePlayer):
                 if value > threshold:
                     possible_orders.append((order, value, path))
 
+        seen = []
         for (order, value, path) in sorted(possible_orders,
                                            key=lambda(x,y,z):y, reverse=True):
             if value < threshold: break
+            if order in seen: continue
             indicator = True
             for i in range(len(path)-1):
                 if graph.has_node(path[i]) and graph.has_node(path[i+1]):
@@ -159,6 +161,7 @@ class Player(BasePlayer):
                         indicator = False
             if indicator:
                 commands.append(self.send_command(order, path))
+                seen.append(order)
                 for i in range(len(path)-1):
                     graph.remove_edge(path[i], path[i+1])
 
