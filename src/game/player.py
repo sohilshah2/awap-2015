@@ -27,6 +27,12 @@ class Player(BasePlayer):
         graph = state.get_graph()
         paths = nx.all_pairs_shortest_path_length(graph)
 
+        total = sum([sum([paths[source][target] for target in paths[source]]) \
+                      for source in paths])
+        avg_pairwise_dist = total / (GRAPH_SIZE*(GRAPH_SIZE-1)/2.0)
+        self.threshold = SCORE_MEAN - DECAY_FACTOR*avg_pairwise_dist
+        print self.threshold
+
         shortest = -1
         best = None
         for source in paths.keys():
@@ -94,9 +100,10 @@ class Player(BasePlayer):
         pending_orders = state.get_pending_orders()
         new_orders = [order for order in pending_orders if order.time_created == time]
         self.number_of_orders += len(new_orders)
+        #if self.number_of_orders < ORDER_VAR*HUBS:
         for order in new_orders:
             self.hubEst.add_order_location(order.node)
-        ms = self.hubEst.get_local_maxes()
+        self.ms = self.hubEst.get_local_maxes()
         #print len(ms)
         #print ms
 
@@ -104,21 +111,32 @@ class Player(BasePlayer):
 
         money = state.get_money()
 
-        if time % 100 == 0:
+        if time % 50 == 0:
             print "money:", state.get_money()
             print "stations:", self.number_of_stations
+            print "hubs:", len(self.ms)
+
+        # if (self.number_of_orders > HUBS*2 - ORDER_VAR):
+        #     if self.number_of_stations == 0:
+        #         commands.append(self.build_command(ms[0][0]))
+        #         self.has_built_station = True
+        #         self.number_of_stations += 1
+        #         self.current_build_cost *= BUILD_FACTOR
+        #         self.stations.append(ms[0][0])
 
 
         if (self.number_of_orders > HUBS*3+10):
-            for (hub,val) in ms:
+            for (hub,val) in self.ms:
                 total_dist = sum([nx.shortest_path_length(graph, hub, station)\
                                  for station in self.stations])
                 if self.number_of_stations == 0:
                     commands.append(self.build_command(hub))
+                    self.has_built_station = True
                     self.number_of_stations += 1
                     self.current_build_cost *= BUILD_FACTOR
                     self.stations.append(hub)
-                first = time_left*ORDER_CHANCE*val/float(self.number_of_orders+1)
+                first = time_left*ORDER_CHANCE*math.log(val)\
+                        /float(self.number_of_orders+1)
                 second = total_dist/(float(self.number_of_stations+1)*ORDER_VAR)
                 if SCORE_MEAN*math.sqrt(HUBS)*(first + second) > self.current_build_cost \
                     and self.current_build_cost < money and \
@@ -142,7 +160,8 @@ class Player(BasePlayer):
             for order in pending_orders:
                 try:
                     path = nx.shortest_path(graph, station, order.get_node())
-                    value = order.get_money() - DECAY_FACTOR*len(path)
+                    value = order.get_money() - DECAY_FACTOR*len(path) - \
+                            DECAY_FACTOR*(time - order.time_created)
                 except nx.NetworkXNoPath:
                     path = None
                     value = 0
@@ -160,6 +179,7 @@ class Player(BasePlayer):
                     if not graph.has_edge(path[i], path[i+1]):
                         indicator = False
             if indicator:
+                assert(value > threshold)
                 commands.append(self.send_command(order, path))
                 seen.append(order)
                 for i in range(len(path)-1):
@@ -207,5 +227,5 @@ class HubEstimator(object):
                     is_local_max = False
             if is_local_max:
                 vtxs.append((vtx, my_d))
-        return sorted(vtxs, key=lambda (x,y): y, reverse=True)
+        return sorted(vtxs, key=lambda (x,y): y, reverse=True)[0:min(HUBS+5,len(vtxs))]
         

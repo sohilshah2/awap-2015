@@ -19,5 +19,5 @@ SCORE_MEAN = 100.0      # Mean for score distribution of an order
 SCORE_VAR = 50.0        # Stddev for score distribution of an order
 
 # These two constants modify the grid_graph
-SPARSITY = 0.02        # Proportion of edges which will be removed
+SPARSITY = 0.01        # Proportion of edges which will be removed
 DIAGONALS = 0.2        # Proportion of vertices with diagonals
