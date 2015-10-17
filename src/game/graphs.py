@@ -57,4 +57,7 @@ def generate_graph():
     # Feel free to define your own graph for testing.
 
     #return nx.random_regular_graph(5, GRAPH_SIZE, seed=GRAPH_SEED)
-    return grid_graph()
+    #return nx.connected_watts_strogatz_graph(GRAPH_SIZE, 5, 0.3, seed=GRAPH_SEED)
+    #return nx.powerlaw_cluster_graph(GRAPH_SIZE, 8, 0.1, seed=GRAPH_SEED)
+    return nx.barabasi_albert_graph(GRAPH_SIZE, 5, seed=GRAPH_SEED)
+    #return grid_graph()
