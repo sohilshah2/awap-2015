@@ -79,12 +79,12 @@ class Player(BasePlayer):
         time = state.get_time()
 
         commands = []
-        # if not self.has_built_station:
-        #     commands.append(self.build_command(self.first_station))
-        #     self.has_built_station = True
-        #     self.number_of_stations = 1
-        #     self.current_build_cost *= BUILD_FACTOR
-        #     self.stations.append(self.first_station)
+        if not self.has_built_station:
+            commands.append(self.build_command(self.first_station))
+            self.has_built_station = True
+            self.number_of_stations = 1
+            self.current_build_cost *= BUILD_FACTOR
+            self.stations.append(self.first_station)
 
         #cutoff = 
         #if self.number_of_stations < cutoff
@@ -117,10 +117,11 @@ class Player(BasePlayer):
                 #print "first:", first
                 #print "second:", second
                 #print "curr:", self.current_build_cost
-                #print "money:", state.get_money()
+                print "money:", state.get_money()
                 print "stations:", self.number_of_stations
                 if SCORE_MEAN*2*(first + second) > self.current_build_cost and \
-                    self.current_build_cost < state.get_money():
+                    self.current_build_cost < state.get_money() and \
+                    hub not in self.stations:
                     commands.append(self.build_command(hub))
                     self.number_of_stations += 1
                     self.current_build_cost *= BUILD_FACTOR
