@@ -2,6 +2,7 @@ import networkx as nx
 import random
 from base_player import BasePlayer
 from settings import *
+from hubs import HubEstimator
 
 class Player(BasePlayer):
     """
@@ -21,6 +22,7 @@ class Player(BasePlayer):
         state : State
             The initial state of the game. See state.py for more information.
         """
+        self.hubEst = HubEstimator(state.get_graph()) 
 
         graph = state.get_graph()
         paths = nx.all_pairs_shortest_path_length(graph)
@@ -72,6 +74,7 @@ class Player(BasePlayer):
         graph = state.get_graph()
         #station = graph.nodes()[len(graph.nodes()/2)]
         station = self.first_station
+        time = state.get_time()
 
         commands = []
         if not self.has_built_station:
@@ -86,6 +89,12 @@ class Player(BasePlayer):
 
 
         pending_orders = state.get_pending_orders()
+        new_orders = [order for order in pending_orders if order.time_created == time]
+        for order in new_orders:
+            self.hubEst.add_order_location(order.node)
+        ms = self.hubEst.get_local_maxes()
+        print len(ms)
+        print ms
 
         for (order, path) in state.get_active_orders():
             for i in range(len(path)-1):
