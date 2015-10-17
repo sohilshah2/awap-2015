@@ -9,7 +9,6 @@ class Player(BasePlayer):
     You will implement this class for the competition. DO NOT change the class
     name or the base class.
     """
-
     # You can set up static state here
     has_built_station = False
 
@@ -50,6 +49,8 @@ class Player(BasePlayer):
         #self.stations = [best]
         self.stations = []
         self.number_of_orders = 0
+
+        self.total_value = 0
 
         return
 
@@ -100,7 +101,6 @@ class Player(BasePlayer):
         pending_orders = state.get_pending_orders()
         new_orders = [order for order in pending_orders if order.time_created == time]
         self.number_of_orders += len(new_orders)
-        #if self.number_of_orders < ORDER_VAR*HUBS:
         for order in new_orders:
             self.hubEst.add_order_location(order.node)
         self.ms = self.hubEst.get_local_maxes()
@@ -125,7 +125,7 @@ class Player(BasePlayer):
         #         self.stations.append(ms[0][0])
 
 
-        if (self.number_of_orders > HUBS*3+10):
+        if (self.number_of_orders > HUBS*2+min(10,2*ORDER_VAR)):
             for (hub,val) in self.ms:
                 total_dist = sum([nx.shortest_path_length(graph, hub, station)\
                                  for station in self.stations])
@@ -144,6 +144,7 @@ class Player(BasePlayer):
                     commands.append(self.build_command(hub))
                     self.number_of_stations += 1
                     money -= self.current_build_cost
+                    self.total_value -= self.current_build_cost
                     self.current_build_cost *= BUILD_FACTOR
                     self.stations.append(hub)
 
@@ -165,7 +166,7 @@ class Player(BasePlayer):
                 except nx.NetworkXNoPath:
                     path = None
                     value = 0
-                if value > threshold:
+                if value > self.threshold:
                     possible_orders.append((order, value, path))
 
         seen = []
@@ -182,6 +183,7 @@ class Player(BasePlayer):
                 assert(value > threshold)
                 commands.append(self.send_command(order, path))
                 seen.append(order)
+                self.total_value += order.get_money()
                 for i in range(len(path)-1):
                     graph.remove_edge(path[i], path[i+1])
 
@@ -193,7 +195,7 @@ class Player(BasePlayer):
         #     path = nx.shortest_path(graph, station, order.get_node())
         #     if self.path_is_valid(state, path):
         #         commands.append(self.send_command(order, path))
-
+        print "total:", self.total_value
         return commands
 
 class HubEstimator(object):
