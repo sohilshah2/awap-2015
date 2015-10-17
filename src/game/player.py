@@ -106,8 +106,8 @@ class Player(BasePlayer):
                     best_money = value
                     best_order = order
                     best_path = path
-            if best_path != None:
-                commands.append(self.send_command(order, path))
+            if best_path != None and self.path_is_valid(state, best_path):
+                commands.append(self.send_command(best_order, best_path))
 
 
         # if len(pending_orders) != 0:
