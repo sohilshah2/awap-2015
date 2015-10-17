@@ -103,7 +103,7 @@ class Player(BasePlayer):
         time_left = 1000-time
 
 
-        if (self.number_of_orders > 25):
+        if (self.number_of_orders > 3*HUBS + 10):
             for (hub,val) in ms:
                 total_dist = sum([nx.shortest_path_length(graph, hub, station)\
                                  for station in self.stations])
