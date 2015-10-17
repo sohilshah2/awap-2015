@@ -94,6 +94,10 @@ class Player(BasePlayer):
         best_money = 0
         best_order = None
         best_path = None
+
+        possible_orders = []
+        threshold = SCORE_MEAN / 4
+
         for station in self.stations:   
             for order in pending_orders:
                 try:
@@ -102,12 +106,26 @@ class Player(BasePlayer):
                 except nx.NetworkXNoPath:
                     path = None
                     value = 0
-                if value > best_money:
-                    best_money = value
-                    best_order = order
-                    best_path = path
-            if best_path != None and self.path_is_valid(state, best_path):
-                commands.append(self.send_command(best_order, best_path))
+                if value > threshold:
+                    possible_orders.append((order, value, path))
+                    #best_money = value
+                    #best_order = order
+                    #best_path = path
+
+        for (order, value, path) in sorted(possible_orders,
+                                           key=lambda(x,y,z):y, reverse=True):
+            if value < threshold: break
+            indicator = True
+            for i in range(len(path)-1):
+                if graph.has_node(path[i]) and graph.has_node(path[i+1]):
+                    if not graph.has_edge(path[i], path[i+1]):
+                        indicator = False
+            if indicator:
+                commands.append(self.send_command(order, path))
+                for i in range(len(path)-1):
+                    graph.remove_edge(path[i], path[i+1])
+
+
 
 
         # if len(pending_orders) != 0:
