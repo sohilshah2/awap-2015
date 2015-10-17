@@ -117,9 +117,10 @@ class Player(BasePlayer):
                 #print "first:", first
                 #print "second:", second
                 #print "curr:", self.current_build_cost
-                print "money:", state.get_money()
-                print "stations:", self.number_of_stations
-                if SCORE_MEAN*2*(first + second) > self.current_build_cost and \
+                if time % 50 == 0:
+                    print "money:", state.get_money()
+                    print "stations:", self.number_of_stations
+                if SCORE_MEAN*1.5*(first + second) > self.current_build_cost and \
                     self.current_build_cost < state.get_money() and \
                     hub not in self.stations:
                     commands.append(self.build_command(hub))
