@@ -100,10 +100,6 @@ class Player(BasePlayer):
             for i in range(len(path)-1):
                 graph.remove_edge(path[i], path[i+1])
 
-        best_money = 0
-        best_order = None
-        best_path = None
-
         possible_orders = []
         threshold = SCORE_MEAN / 4
 
@@ -117,9 +113,6 @@ class Player(BasePlayer):
                     value = 0
                 if value > threshold:
                     possible_orders.append((order, value, path))
-                    #best_money = value
-                    #best_order = order
-                    #best_path = path
 
         for (order, value, path) in sorted(possible_orders,
                                            key=lambda(x,y,z):y, reverse=True):
