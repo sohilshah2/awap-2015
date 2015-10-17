@@ -41,7 +41,9 @@ class Player(BasePlayer):
         self.first_station = best
         self.number_of_stations = 0
         self.current_build_cost = INIT_BUILD_COST
-        self.stations = [best]
+        #self.stations = [best]
+        self.stations = []
+        self.number_of_orders = 0
 
         return
 
@@ -73,15 +75,16 @@ class Player(BasePlayer):
 
         graph = state.get_graph()
         #station = graph.nodes()[len(graph.nodes()/2)]
-        station = self.first_station
+        #station = self.first_station
         time = state.get_time()
 
         commands = []
-        if not self.has_built_station:
-            commands.append(self.build_command(self.first_station))
-            self.has_built_station = True
-            self.number_of_stations = 1
-            self.current_build_cost *= BUILD_FACTOR
+        # if not self.has_built_station:
+        #     commands.append(self.build_command(self.first_station))
+        #     self.has_built_station = True
+        #     self.number_of_stations = 1
+        #     self.current_build_cost *= BUILD_FACTOR
+        #     self.stations.append(self.first_station)
 
         #cutoff = 
         #if self.number_of_stations < cutoff
@@ -90,11 +93,40 @@ class Player(BasePlayer):
 
         pending_orders = state.get_pending_orders()
         new_orders = [order for order in pending_orders if order.time_created == time]
+        self.number_of_orders += len(new_orders)
         for order in new_orders:
             self.hubEst.add_order_location(order.node)
         ms = self.hubEst.get_local_maxes()
-        print len(ms)
-        print ms
+        #print len(ms)
+        #print ms
+
+        time_left = 1000-time
+
+
+        if (self.number_of_orders > 25):
+            for (hub,val) in ms:
+                total_dist = sum([nx.shortest_path_length(graph, hub, station)\
+                                 for station in self.stations])
+                if self.number_of_stations == 0:
+                    commands.append(self.build_command(hub))
+                    self.number_of_stations += 1
+                    self.current_build_cost *= BUILD_FACTOR
+                    self.stations.append(hub)
+                first = time_left*ORDER_CHANCE*val/float(self.number_of_orders+1)
+                second = total_dist/(float(self.number_of_stations+1)*ORDER_VAR)
+                #print "first:", first
+                #print "second:", second
+                #print "curr:", self.current_build_cost
+                #print "money:", state.get_money()
+                print "stations:", self.number_of_stations
+                if SCORE_MEAN*1*(first + second) > self.current_build_cost and \
+                    self.current_build_cost < state.get_money():
+                    commands.append(self.build_command(hub))
+                    self.number_of_stations += 1
+                    self.current_build_cost *= BUILD_FACTOR
+                    self.stations.append(hub)
+
+
 
         for (order, path) in state.get_active_orders():
             for i in range(len(path)-1):
