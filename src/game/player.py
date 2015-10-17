@@ -102,8 +102,14 @@ class Player(BasePlayer):
 
         time_left = 1000-time
 
+        money = state.get_money()
 
-        if (self.number_of_orders > 3*HUBS + 10):
+        if time % 100 == 0:
+            print "money:", state.get_money()
+            print "stations:", self.number_of_stations
+
+
+        if (self.number_of_orders > HUBS*3+10):
             for (hub,val) in ms:
                 total_dist = sum([nx.shortest_path_length(graph, hub, station)\
                                  for station in self.stations])
@@ -114,16 +120,12 @@ class Player(BasePlayer):
                     self.stations.append(hub)
                 first = time_left*ORDER_CHANCE*val/float(self.number_of_orders+1)
                 second = total_dist/(float(self.number_of_stations+1)*ORDER_VAR)
-                #print "first:", first
-                #print "second:", second
-                #print "curr:", self.current_build_cost
-                print "money:", state.get_money()
-                print "stations:", self.number_of_stations
-                if SCORE_MEAN*2*(first + second) > self.current_build_cost and \
-                    self.current_build_cost < state.get_money() and \
+                if SCORE_MEAN*math.sqrt(HUBS)*(first + second) > self.current_build_cost \
+                    and self.current_build_cost < money and \
                     hub not in self.stations:
                     commands.append(self.build_command(hub))
                     self.number_of_stations += 1
+                    money -= self.current_build_cost
                     self.current_build_cost *= BUILD_FACTOR
                     self.stations.append(hub)
 
@@ -134,7 +136,7 @@ class Player(BasePlayer):
                 graph.remove_edge(path[i], path[i+1])
 
         possible_orders = []
-        threshold = SCORE_MEAN / 4
+        threshold = SCORE_MEAN / 20
 
         for station in self.stations:   
             for order in pending_orders:
